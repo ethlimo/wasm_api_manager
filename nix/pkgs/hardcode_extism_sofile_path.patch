@@ -1,0 +1,29 @@
+diff --git a/src/bindings.ml b/src/bindings.ml
+index 841c5f2..57b683d 100644
+--- a/src/bindings.ml
++++ b/src/bindings.ml
+@@ -2,10 +2,7 @@ let ( // ) = Filename.concat
+ 
+ let paths =
+   [
+-    "/usr/lib";
+-    "/usr/local/lib";
+-    Sys.getenv "HOME" // ".local/lib";
+-    Sys.getcwd ();
++    "EXTISM_SOFILE";
+   ]
+ 
+ let check x =
+@@ -16,11 +13,7 @@ let check x =
+   else None
+ 
+ let locate () =
+-  let init =
+-    match Sys.getenv_opt "EXTISM_PATH" with
+-    | Some path -> (
+-        match check path with None -> check (path // "lib") | Some _ as x -> x)
+-    | None -> None
++  let init = check (List.nth paths 0)
+   in
+   List.fold_left
+     (fun acc path -> match acc with Some _ -> acc | None -> check path)

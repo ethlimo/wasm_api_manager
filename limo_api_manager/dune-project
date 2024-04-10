@@ -1,0 +1,29 @@
+(lang dune 3.7)
+
+(using coq 0.7)
+
+(name limo_api_manager)
+
+(source
+ (github username/reponame))
+
+(authors "Author Name")
+
+(maintainers "Maintainer Name")
+
+(license LICENSE)
+
+(documentation https://url/to/documentation)
+
+
+(package
+ (name limo_api_manager)
+ (synopsis "A short synopsis")
+ (description "A longer description")
+ (depends ocaml dune coq zarith extism)
+ (tags
+  (topics "to describe" your project)))
+
+(generate_opam_files true)
+
+; See the complete stanza docs at https://dune.readthedocs.io/en/stable/dune-files.html#dune-project

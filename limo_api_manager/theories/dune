@@ -1,0 +1,5 @@
+(coq.theory
+ (name ExampleLib)
+ (package limo_api_manager)
+ (synopsis "Example Coq Library for Adding Two Nats")
+ (modules (:standard)))

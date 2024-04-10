@@ -1,0 +1,14 @@
+(env
+ (dev
+  (flags
+   (:standard -warn-error -A))))
+
+(coq.extraction
+ (prelude ProofMain)
+ (extracted_modules ProofMain)
+ (theories ExampleLib))
+
+(executable
+ (public_name limo_api_manager)
+ (name main)
+ (libraries limo_api_manager zarith extism))
