@@ -1,6 +1,6 @@
-(lang dune 3.7)
+(lang dune 3.6)
 
-(using coq 0.7)
+(using coq 0.6)
 
 (name limo_api_manager)
 
@@ -20,7 +20,7 @@
  (name limo_api_manager)
  (synopsis "A short synopsis")
  (description "A longer description")
- (depends ocaml dune coq zarith extism)
+ (depends ocaml dune coq zarith extism cohttp cohttp-eio eio_main eio_linux tls tls-eio ca-certs logs fmt ppx_yojson_conv ppx_deriving yojson)
  (tags
   (topics "to describe" your project)))
 

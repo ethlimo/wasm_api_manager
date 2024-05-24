@@ -11,10 +11,22 @@ doc: "https://url/to/documentation"
 bug-reports: "https://github.com/username/reponame/issues"
 depends: [
   "ocaml"
-  "dune" {>= "3.7"}
+  "dune" {>= "3.6"}
   "coq"
   "zarith"
   "extism"
+  "cohttp"
+  "cohttp-eio"
+  "eio_main"
+  "eio_linux"
+  "tls"
+  "tls-eio"
+  "ca-certs"
+  "logs"
+  "fmt"
+  "ppx_yojson_conv"
+  "ppx_deriving"
+  "yojson"
   "odoc" {with-doc}
 ]
 build: [

@@ -11,4 +11,18 @@
 (executable
  (public_name limo_api_manager)
  (name main)
- (libraries limo_api_manager zarith extism))
+ (preprocess (pps ppx_yojson_conv))
+ (libraries
+  limo_api_manager
+  zarith
+  extism
+  cohttp-eio
+  eio_main
+  tls
+  tls-eio
+  ca-certs
+  logs.cli
+  logs.fmt
+  fmt.tty
+  yojson
+  ppx_yojson_conv ))
