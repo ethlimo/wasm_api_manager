@@ -13,7 +13,7 @@
  (name main)
  (preprocess (pps ppx_yojson_conv))
  (libraries
-  limo_api_manager
+  Lib
   zarith
   extism
   cohttp-eio

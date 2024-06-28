@@ -1,2 +1,7 @@
 (library
- (name limo_api_manager))
+ (preprocess (pps ppx_yojson_conv))
+ (name Lib)
+ (libraries
+  cohttp
+  yojson
+  ppx_yojson_conv))
