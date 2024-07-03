@@ -5,6 +5,7 @@ open Ppx_yojson_conv_lib.Yojson_conv.Primitives
 open Lib.Dweb_api_response
 open Lib.Http_types
 open Lib.Http_string
+
 let port = ref 8000
 
 let () = Logs.set_reporter (Logs_fmt.reporter ())
@@ -36,7 +37,8 @@ module WasmRepository = struct
   type ensname = string
   type artifactname = string
   type wasm_payload = string
-  type user_table = { artifact_table : (artifactname, string) Hashtbl.t }
+  type artifact = Extism.Plugin.t
+  type user_table = { artifact_table : (artifactname, artifact) Hashtbl.t }
   type tbl = (ensname, user_table) Hashtbl.t
   type t = {
     table : tbl;
@@ -44,7 +46,7 @@ module WasmRepository = struct
   }
 
   let get_table_from_ensname (t : t) (ensname : ensname) :
-      (artifactname, string) Hashtbl.t =
+      (artifactname, artifact) Hashtbl.t =
     match Hashtbl.find_opt (t.table) ensname with
     | Some x -> x.artifact_table
     | None ->
@@ -96,7 +98,7 @@ module WasmRepository = struct
     Option.map (fun x -> (ensure_string_has_trailing_slash x) ^ artifactname ^ ".wasm") base_url
 end
 
-let get_wasm_payload (wasm_repository : WasmRepository.t) (sw: Eio.Std.Switch.t) (ensname : string)
+let download_wasm_payload (wasm_repository : WasmRepository.t) (sw: Eio.Std.Switch.t) (ensname : string)
     (artifactname : string) : Extism.Plugin.t option =
   let artifact =
     WasmRepository.get_artifact_url_of_ensname wasm_repository sw ensname artifactname
@@ -108,17 +110,29 @@ let get_wasm_payload (wasm_repository : WasmRepository.t) (sw: Eio.Std.Switch.t)
   log_info (Printf.sprintf "Loaded plugin %s from %s\n" ensname x);
   plugin) artifact
 
+let get_wasm_payload (wasm_repository : WasmRepository.t) (sw: Eio.Std.Switch.t) (ensname : string)
+    (artifactname : string) : Extism.Plugin.t option =
+  let table = WasmRepository.get_table_from_ensname wasm_repository ensname in
+  match Hashtbl.find_opt table artifactname with
+  | Some x -> Some x
+  | None ->
+      let plugin = download_wasm_payload wasm_repository sw ensname artifactname in
+      Option.iter (fun x -> Hashtbl.replace table artifactname x) plugin;
+      plugin
+
 let server env sw =
   let wasm_repository = WasmRepository.create env in
   let callback _conn req (body : Cohttp_eio.Server.body) =
-    let url = req |> Request.uri |> Uri.to_string in
+    let url = req |> Request.uri in
+    let path = Uri.path url in
+    let query = List.map http_query_of_uri_query @@ Uri.query url in
     let meth = req |> Request.meth |> Code.string_of_method in
     let headers =
       req |> Request.headers |> Header.to_string |> String.split_on_char '\n'
     in
     ( body |> Eio.Flow.read_all )
     |> fun body -> 
-      let request = Yojson.Safe.to_string (yojson_of_http_request {url; method_ = meth; headers; body }) in
+      let request = Yojson.Safe.to_string (yojson_of_http_request {url = (Uri.to_string url); method_ = meth; headers; body; path; query; }) in
       log_info (Printf.sprintf "Request: %s" request);
       let manifest = get_wasm_payload wasm_repository sw "vitalik.eth" "router" in
       match manifest with
