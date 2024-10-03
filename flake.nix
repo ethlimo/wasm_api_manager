@@ -43,13 +43,20 @@
             ];
           }
           package_location
-          devPackagesQuery // {
+          devPackagesQuery // rec {
             ocaml-base-compiler = "*";
             coq = "*";
             wasmtime = "*";
             extism = "dev";
             cohttp = "*";
             eio = "*";
+            cryptokit = "*";
+            mirage-crypto = "1.1.0";
+            mirage-crypto-ec = mirage-crypto;
+            mirage-crypto-pk = mirage-crypto;
+            mirage-crypto-rng = mirage-crypto;
+            mirage-crypto-rng-eio = mirage-crypto-rng;
+
           }); #TODO: doNixSupport = false; needs to be added to the overrides
           overlay = final: prev: {
             ${package} = prev.${package}.overrideAttrs (_: {

@@ -4,4 +4,11 @@
  (libraries
   cohttp
   yojson
-  ppx_yojson_conv))
+  ppx_yojson_conv
+  cohttp-eio
+  eio_main
+  tls
+  tls-eio
+  ca-certs
+  extism
+  cryptokit))

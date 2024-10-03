@@ -27,6 +27,8 @@ depends: [
   "ppx_yojson_conv"
   "ppx_deriving"
   "yojson"
+  "cryptokit"
+  "mirage-crypto-rng-eio"
   "odoc" {with-doc}
 ]
 build: [

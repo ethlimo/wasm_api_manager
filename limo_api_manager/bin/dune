@@ -15,6 +15,7 @@
  (libraries
   Lib
   zarith
+  cryptokit
   extism
   cohttp-eio
   eio_main
@@ -25,4 +26,5 @@
   logs.fmt
   fmt.tty
   yojson
-  ppx_yojson_conv ))
+  ppx_yojson_conv
+  mirage-crypto-rng-eio))
