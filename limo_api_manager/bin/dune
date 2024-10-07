@@ -10,7 +10,7 @@
 
 (executable
  (public_name limo_api_manager)
- (name main)
+ (name limo_api_manager)
  (preprocess (pps ppx_yojson_conv))
  (libraries
   Lib

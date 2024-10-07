@@ -6,8 +6,6 @@ let log_warning = Utils.log_warning
 let log_error = Utils.log_error
 let log_exn_as_warning = Utils.log_exn_as_warning
 
-let url_of_server = "http://127.0.0.1:3000"
-
 let ensure_string_has_trailing_slash (s : string) : string =
   let rec remove_trailing_slash s =
     if String.length s > 0 && s.[String.length s - 1] = '/' then
@@ -24,18 +22,17 @@ type ensname = string
 
 module type WasmPayloadDownloader = sig
   val get_artifacts_as_bytes_base64 :
-    (module HttpClient)  -> Eio.Std.Switch.t -> ensname -> string option
+    (module HttpClient)  -> Eio.Std.Switch.t -> Uri.t -> ensname -> string option
 end
 
 let make_wasmPayloadDownloader () : (module WasmPayloadDownloader) =
   let module WPD = struct
     let get_artifacts_as_bytes_base64 (module CT : HttpClient)
-        (sw : Eio.Std.Switch.t) (ensname : ensname) : string option =
+        (sw : Eio.Std.Switch.t) (dweb_api_server: Uri.t) (ensname : ensname) : string option =
       let get_url_of_ensname (client : CT.t) (sw : Eio.Std.Switch.t)
           (ensname : ensname) : string option =
-        let uri = Uri.of_string url_of_server in
         let headers = [ ("Host", ensname); ("Accept", "application/json") ] in
-        let resp, body = CT.get client ~headers sw uri in
+        let resp, body = CT.get client ~headers sw dweb_api_server in
         log_info (Printf.sprintf "%s: get_url_of_ensname response status: %s\n" ensname
           (Cohttp.Code.string_of_status (Cohttp.Response.status resp)));
         if Cohttp.Response.status resp = `OK then
@@ -111,7 +108,7 @@ module WasmRepository (CT : HttpClient) (WPD: WasmPayloadDownloader) = struct
     let tbl = Hashtbl.create 10 in
     { table = tbl }
   let get_router (t : t) (sw : Eio.Std.Switch.t)
-    (ensname : ensname) (force: bool) : artifact option =
+    (ensname : ensname) (dweb_api_uri: Uri.t) (force: bool) : artifact option =
       let internal () : artifact option =
         let table = get_table_from_ensname t ensname in
         let payload = Hashtbl.find_opt table "router" in
@@ -119,7 +116,7 @@ module WasmRepository (CT : HttpClient) (WPD: WasmPayloadDownloader) = struct
         | Some x -> Some x
         | None -> (
             log_info (Printf.sprintf "%s: router not found in cache\n" ensname);
-            match WPD.get_artifacts_as_bytes_base64 (module CT) sw ensname with
+            match WPD.get_artifacts_as_bytes_base64 (module CT) sw dweb_api_uri ensname with
             | Some x ->
                 let manifest = Extism.Manifest.create [Extism.Manifest.Wasm.data x] in
                 let plugin = (Extism.Plugin.of_manifest_exn ~wasi:true manifest) in

@@ -16,6 +16,7 @@ let log_exn_as_warning = Lib.Utils.log_exn_as_warning
 let port = ref 8000
 let domain_suffix = ref None
 let domain_suffix_replacement = ref None
+let dweb_api_uri = ref None
 
 let () = Logs.set_reporter (Logs_fmt.reporter ())
 and () = Logs.Src.set_level Cohttp_eio.src (Some Debug)
@@ -28,7 +29,7 @@ let extract_host_header domain_replacement_list headers =
     log_warning "Host header is missing";
     failwith "Host header is missing"
 
-let server (env) (sw) domain_replacement_list =
+let server (env) (sw) (dweb_api_uri : Uri.t) domain_replacement_list =
   let (module Client) = make_cohttpeioclient env#net in
   let (module WPD) = make_wasmPayloadDownloader () in
   let module WR = WasmRepository(Client)(WPD) in
@@ -44,7 +45,7 @@ let server (env) (sw) domain_replacement_list =
     ( body |> Eio.Flow.read_all ) |> fun body ->
       let request = Yojson.Safe.to_string (yojson_of_http_request {url = (Uri.host_with_default url); method_ = meth; headers = (new_headers |> Header.to_string |> String.split_on_char '\n'); body; path; query; }) in
       log_info (Printf.sprintf "Request: %s" request);
-      let manifest = WR.get_router repo sw host_header false in
+      let manifest = WR.get_router repo sw host_header dweb_api_uri false in
       match manifest with
       | Some plugin ->
         let response = http_response_of_json_string @@ Extism.Error.unwrap @@ Plugin.call_string plugin ~name:"http_json" (request) in
@@ -65,13 +66,17 @@ let server (env) (sw) domain_replacement_list =
 let speclist = [
   ("--port", Arg.Set_int port, "Port to listen on");
   ("--domain-suffix", Arg.String (fun s -> domain_suffix := Some s), "Domain suffix");
-  ("--domain-suffix-replacement", Arg.String (fun s -> domain_suffix_replacement := Some s), "Domain suffix replacement")
+  ("--domain-suffix-replacement", Arg.String (fun s -> domain_suffix_replacement := Some s), "Domain suffix replacement");
+  ("--dweb-api-uri", Arg.String (fun s -> dweb_api_uri := Some (Uri.of_string s)), "Dweb API URI")
 ]
 
 let () =
   Arg.parse speclist (fun _ -> ()) "";
   if !port < 1 || !port > 65535 then
     failwith "Invalid port number";
+  if !dweb_api_uri = None then
+    failwith "Dweb API URI is required";
+  let dweb_api_uri = Option.get !dweb_api_uri in
   let domain_replacement_list = Lib.Utils.create_domain_replacement_list [(!domain_suffix, !domain_suffix_replacement)] in
   Eio_main.run @@ fun env ->
-    Eio.Switch.run @@ fun sw -> Mirage_crypto_rng_eio.run (module Mirage_crypto_rng.Fortuna) env @@ fun _ -> server env sw (Option.value domain_replacement_list ~default:[])
+    Eio.Switch.run @@ fun sw -> Mirage_crypto_rng_eio.run (module Mirage_crypto_rng.Fortuna) env @@ fun _ -> server env sw dweb_api_uri (Option.value domain_replacement_list ~default:[])
